@@ -73,6 +73,7 @@ print(f"r = {sol.value(r)}")
 
 """
 
+"""
 
 ### Question 9c ###
 
@@ -83,6 +84,7 @@ u0 = opti_cons.variable(3)
 u1 = opti_cons.variable(3)
 u2 = opti_cons.variable(3)
 
+"""
 
 # Données supplémentaires
 K = 3
@@ -95,6 +97,8 @@ c = [
 d = np.array([400, 67, 33])
 uk = [u0, u1, u2]
 
+
+"""
 
 # Minimisation de -f(q,r)
 f = 0
@@ -116,3 +120,41 @@ print("Solve Chocolatine with constraints with Casadi...")
 sol = opti_cons.solve()
 print(f"q = {sol.value(q)}")
 print(f"uk = {[sol.value(u0), sol.value(u1), sol.value(u2)]}")
+
+"""
+
+### Question 10b ###
+
+
+# Paramètres d'entrée
+def fun(q):
+    f = 0
+    for k in range(3):
+        f += (cs.dot(v, fun_h(q, d)) - cs.dot(c[k], A @ q)) * pi[k]
+    return f
+
+
+# Définition de la fonction Prox
+def prox(m, f, x):
+    opti_cons = Opti()
+    s = opti_cons.variable(len(x))
+    opti_cons.minimize(f(s) + cs.norm_2(s - x) ** 2 / (2 * m))
+    opti_cons.solver("ipopt")
+    sol = opti_cons.solve()
+    return sol.value(s)
+
+
+# Algorithme
+def algo_prox(fun):
+    q0 = np.array([0, 0, 0])
+    l = 1
+    c = True
+    q = q0
+    while c:
+        y = prox(1 / l, fun, q)
+        if cs.norm_2(y - q) < 10 ** (-4):
+            c = False
+        else:
+            l += 1
+            q = y
+    return q
